@@ -13,7 +13,35 @@ model.fit(X_train, y_train)
 preds = model.predict(X_test)
 ```
 
-I am then going to use a Jupyter notebook to visualize the results and do the comparisons.
+I am then going to use a Jupyter notebook to visualize the results and do the comparisons. Each Jupyter notebook is going to follow loosely the following structure
+1. Goal of the experiment
+2. Dataset generation/loading
+3. Train/test split
+4. Feature scaling
+5. Baseline: sklearn model
+6. Own model
+7. PyTorch model
+8. Metrics comparison
+9. Plots
+10. Hyperparameter sweep
+11. Conclusions
 
 ## Project Structure
-fill in
+This is the current project structure
+```
+├── README.md
+├── models
+│   ├── __init__.py
+│   ├── decision_tree.py
+│   ├── k_means.py
+│   ├── knn.py
+│   ├── linear_regression.py
+│   ├── logistic_regression.py
+│   ├── naive_bayes.py
+│   ├── pca.py
+│   ├── perceptron.py
+│   ├── random_forest.py
+│   └── svm.py
+└── notebooks
+    └── testing.ipynb
+```
