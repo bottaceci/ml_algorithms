@@ -34,7 +34,8 @@ def benchmark_pytorch_model(
         lr,
         n_runs=30, 
         criterion_cls = nn.MSELoss,
-        optimizer_cls = torch.optim.SGD
+        optimizer_cls = torch.optim.SGD,
+        predict_fn = None
     ):
     fit_times = []
     predict_times = []
@@ -53,11 +54,11 @@ def benchmark_pytorch_model(
             torch_model.bias.zero_()
 
         criterion = criterion_cls()
-        optimizer = optimizer_cls(torch_model.parameters(), lr=0.01)
+        optimizer = optimizer_cls(torch_model.parameters(), lr=lr)
 
         start = perf_counter()
 
-        for _ in range(1000):
+        for _ in range(n_iters):
             y_pred = torch_model(X_train_tensor)
             loss = criterion(y_pred, y_train_tensor)
 
@@ -70,7 +71,10 @@ def benchmark_pytorch_model(
         start = perf_counter()
 
         with torch.no_grad():
-            torch_preds = torch_model(X_test_tensor).numpy().ravel()
+            if predict_fn:
+                torch_preds = predict_fn(X_test_tensor)
+            else:
+                torch_preds = torch_model(X_test_tensor).numpy().ravel()
 
         predict_times.append(perf_counter() - start)
 
