@@ -24,16 +24,24 @@ class Node:
 class DecisionTree:
     def __init__(self, 
                  min_samples_split = 2,
-                 max_depth = 100,
-                 n_features = None):
+                 max_depth = 3,
+                 n_features = None,
+                 random_state = None):
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
         self.n_features = n_features
+        self.random_state = random_state
+        self.rng = np.random.default_rng(random_state)
         self.root = None
 
     def fit(self, X, y):
+        X = np.asarray(X)
+        y = np.asarray(y).ravel()
+
         self.n_features = X.shape[1] if not self.n_features else min(X.shape[1],self.n_features)
         self.root = self._grow_tree(X, y)
+
+        return self
 
     def _grow_tree(self, X, y, depth=0): # recursive function
         n_samples, n_feats = X.shape
@@ -48,10 +56,14 @@ class DecisionTree:
             leaf_value = self._most_common_label(y)
             return Node(value=leaf_value)
         
-        feat_idxs = np.random.choice(n_feats, self.n_features, replace=False)
+        feat_idxs = self.rng.choice(n_feats, self.n_features, replace=False)
 
         # find the best split
         best_feature, best_threshold = self._best_split(X, y, feat_idxs)
+
+        if best_feature is None:
+            leaf_value = self._most_common_label(y)
+            return Node(value=leaf_value)
 
         # create child nodes
         left_idxs, right_idxs = self._split(X[:, best_feature], best_threshold)
@@ -115,6 +127,10 @@ class DecisionTree:
         return counter.most_common(1)[0][0]
 
     def predict(self, X):
+        if self.root is None:
+            raise ValueError("Model has not been fitted yet.")
+
+        X = np.asarray(X)
         return np.array([self._traverse_tree(x, self.root) for x in X])
     
     def _traverse_tree(self, x, node: Node):

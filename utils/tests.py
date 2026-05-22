@@ -231,3 +231,39 @@ def learning_rate_threshold_sweep(
         })
 
     return results, loss_curves
+
+def parameter_sweep_trees(model_cls, param_grid, X_train, y_train, X_test, y_test, 
+                    base_params=None):
+    base_params = base_params or {}
+    sweep_results = []
+
+    keys = list(param_grid.keys())
+
+    for values in product(*param_grid.values()):
+        sweep_params = dict(zip(keys,values))
+        params = {**base_params, **sweep_params}
+
+        model = model_cls(**params) 
+
+        start = perf_counter()
+        model.fit(X_train, y_train)
+        fit_time = perf_counter() - start
+
+        preds = model.predict(X_test)
+
+        accuracy = cl.accuracy_score(y_test, preds)
+        precision = cl.precision_score(y_test, preds)
+        recall = cl.recall_score(y_test, preds)
+        f1 = cl.f1_score(y_test, preds)
+
+        sweep_results.append({
+            **sweep_params,
+            **base_params,
+            "test_accuracy": accuracy,
+            "test_precision": precision,
+            "test_recall": recall,
+            "test_f1": f1,
+            "fit_time": fit_time,
+        })
+
+    return sweep_results
