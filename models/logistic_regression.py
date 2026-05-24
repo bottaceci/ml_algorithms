@@ -37,6 +37,8 @@ class LogisticRegression:
             self.weights -= self.lr*dw
             self.bias -= self.lr*db
 
+        return self
+
     def predict_proba(self,X):
         X = np.asarray(X)
 

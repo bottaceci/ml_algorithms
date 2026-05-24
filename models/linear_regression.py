@@ -31,6 +31,8 @@ class LinearRegression:
             self.weights -= self.lr*dw
             self.bias -= self.lr*db
 
+        return self
+
     def predict(self, X):
         X = np.asarray(X)
 
