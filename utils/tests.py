@@ -9,6 +9,7 @@ def parameter_sweep_regression(model_cls, param_grid, X_train, y_train, X_test, 
     base_params = base_params or {}
     sweep_results = []
     loss_curves = []
+    models = []
 
     keys = list(param_grid.keys())
 
@@ -22,6 +23,7 @@ def parameter_sweep_regression(model_cls, param_grid, X_train, y_train, X_test, 
         model.fit(X_train, y_train)
         fit_time = perf_counter() - start
 
+        models[values] = model
         loss_array = np.array(model.loss_history)
 
         is_stable = np.all(np.isfinite(loss_array))
@@ -72,6 +74,7 @@ def parameter_sweep_classification(model_cls, param_grid, X_train, y_train, X_te
     base_params = base_params or {}
     sweep_results = []
     loss_curves = []
+    models = {}
 
     keys = list(param_grid.keys())
 
@@ -85,6 +88,7 @@ def parameter_sweep_classification(model_cls, param_grid, X_train, y_train, X_te
         model.fit(X_train, y_train)
         fit_time = perf_counter() - start
 
+        models[values] = model
         loss_array = np.array(model.loss_history)
 
         is_stable = np.all(np.isfinite(loss_array))
@@ -132,7 +136,7 @@ def parameter_sweep_classification(model_cls, param_grid, X_train, y_train, X_te
             'loss': loss_array
         })
 
-    return sweep_results, loss_curves
+    return sweep_results, loss_curves, models
 
 def threshold_sweep_classification(
     model,
