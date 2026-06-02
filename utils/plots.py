@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 import numpy as np
 
 def plot_confusion_matrix(cm, class_labels, title):
@@ -80,3 +81,72 @@ def plot_decision_boundary(model, X, y, title):
     plt.title(title)
 
     plt.show()
+
+def animate_mlp_decision_boundary(model, snapshots, X, y):
+    x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
+    y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
+
+    xx, yy = np.meshgrid(
+        np.linspace(x_min, x_max, 300),
+        np.linspace(y_min, y_max, 300),
+    )
+
+    grid = np.c_[xx.ravel(), yy.ravel()]
+    snapshot_keys = list(snapshots.keys())
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    original_params = {
+        "W1": model.W1.copy(),
+        "b1": model.b1.copy(),
+        "W2": model.W2.copy(),
+        "b2": model.b2.copy(),
+    }
+
+    def update(frame_idx):
+        ax.clear()
+
+        iteration = snapshot_keys[frame_idx]
+        params = snapshots[iteration]
+
+        model.W1 = params["W1"]
+        model.b1 = params["b1"]
+        model.W2 = params["W2"]
+        model.b2 = params["b2"]
+
+        Z = model.predict(grid).reshape(xx.shape)
+
+        ax.contourf(xx, yy, Z, alpha=0.3)
+
+        ax.scatter(
+            X[:, 0],
+            X[:, 1],
+            c=y,
+            edgecolor="k",
+            alpha=0.7,
+        )
+
+        ax.set_xlabel("Feature 1")
+        ax.set_ylabel("Feature 2")
+        ax.set_title(f"MLP decision boundary - iteration {iteration}")
+        ax.set_aspect("equal", adjustable="box")
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(y_min, y_max)
+        ax.grid(True)
+
+    anim = FuncAnimation(
+        fig,
+        update,
+        frames=len(snapshot_keys),
+        interval=150,
+        repeat=True,
+    )
+
+    plt.close(fig)
+
+    model.W1 = original_params["W1"]
+    model.b1 = original_params["b1"]
+    model.W2 = original_params["W2"]
+    model.b2 = original_params["b2"]
+
+    return anim
