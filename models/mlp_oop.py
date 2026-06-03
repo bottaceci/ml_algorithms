@@ -121,6 +121,25 @@ class Sigmoid(Layer):
 
     def reset_parameters(self):
         return super().reset_parameters()
+    
+class Softmax(Layer):
+    def __init__(self):
+        self.output: Array | None = None
+
+    def forward(self, X: Array) -> Array:
+        shifted = X - np.max(X, axis=1, keepdims=True)
+        exp_values = np.exp(shifted)
+        self.output = exp_values / np.sum(exp_values, axis=1, keepdims=True)
+        return self.output
+    
+    def backward(self, grad: Array) -> Array:
+        # Usually, when Softmax is paired with categorical cross-entropy,
+        # the combined gradient is handled directly by the loss:
+        # dZ = y_pred - y_true.
+        return grad
+    
+    def reset_parameters(self):
+        return super().reset_parameters()
 
 # Loss
 class BinaryCrossEntropy:
@@ -148,13 +167,27 @@ class BinaryCrossEntropy:
             y_true / y_pred
             - (1 - y_true) / (1 - y_pred)
         )
+    
+class CategoricalCrossEntropy:
+    def forward(self, y_true: Array, y_pred: Array) -> float:
+        eps = 1e-15
+        y_pred = np.clip(y_pred, eps, 1 - eps)
+
+        return -np.mean(np.sum(y_true * np.log(y_pred), axis=1))
+
+    def backward(self, y_true: Array, y_pred: Array) -> Array:
+        return y_pred - y_true
 
 # Model container
 class Sequential:
-    def __init__(self, *layers: Layer):
+    def __init__(self, *layers: Layer, task: str = 'binary') -> None:
         self.layers: tuple[Layer, ...] = layers
+        self.task = task
         self.loss_history: list[float] = []
         self.current_epoch: int = 0
+
+        if self.task not in {"binary", "multiclass"}:
+            raise ValueError("task must be either 'binary' or 'multiclass'")
 
     def reset_parameters(self) -> None:
         for layer in self.layers:
@@ -189,7 +222,10 @@ class Sequential:
         reset: bool = True
     ):
         X = np.asarray(X)
-        y = np.asarray(y).reshape(-1, 1)
+        y = np.asarray(y)
+
+        if self.task == 'binary':
+            y = y.reshape(-1, 1)
 
         if reset:
             self.reset_parameters()
@@ -209,8 +245,15 @@ class Sequential:
         return self
     
     def predict_proba(self, X):
-        return self.forward(X).ravel()
+        return self.forward(X)
     
-    def predict(self, X, threshold=0.5):
+    def predict(self, X: Array, threshold: float = 0.5) -> Array:
         proba = self.predict_proba(X)
-        return (proba >= threshold).astype(int)
+
+        if self.task == "binary":
+            return (proba.ravel() >= threshold).astype(int)
+
+        if self.task == "multiclass":
+            return np.argmax(proba, axis=1)
+
+        raise ValueError(f"Unknown task: {self.task}")

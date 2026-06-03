@@ -5,40 +5,69 @@ def accuracy_score(y_true, y_pred):
     y_pred = np.asarray(y_pred).ravel()
     return np.mean(y_true == y_pred)
 
-def precision_score(y_true, y_pred, pos_label=1):
+def precision_score(y_true, y_pred, pos_label=1, average='binary'):
     y_true = np.asarray(y_true).ravel()
     y_pred = np.asarray(y_pred).ravel()
 
-    tp = np.sum((y_true == pos_label) & (y_pred == pos_label))
-    fp = np.sum((y_true != pos_label) & (y_pred == pos_label))
+    if average == 'binary':
+        tp = np.sum((y_true == pos_label) & (y_pred == pos_label))
+        fp = np.sum((y_true != pos_label) & (y_pred == pos_label))
 
-    if tp + fp == 0:
-        return 0.0
+        return 0.0 if tp + fp == 0 else tp / (tp + fp)
 
-    return tp / (tp + fp)
+    if average == 'macro':
+        classes = np.unique(y_true)
+        scores = [
+            precision_score(y_true, y_pred, pos_label=c, average='binary')
+            for c in classes
+        ]
+        return np.mean(scores)
+    
+    raise ValueError("average must be 'binary' or 'macro'")
 
 
-def recall_score(y_true, y_pred, pos_label=1):
+def recall_score(y_true, y_pred, pos_label=1, average='binary'):
     y_true = np.asarray(y_true).ravel()
     y_pred = np.asarray(y_pred).ravel()
 
-    tp = np.sum((y_true == pos_label) & (y_pred == pos_label))
-    fn = np.sum((y_true == pos_label) & (y_pred != pos_label))
+    if average == "binary":
+        tp = np.sum((y_true == pos_label) & (y_pred == pos_label))
+        fn = np.sum((y_true == pos_label) & (y_pred != pos_label))
 
-    if tp + fn == 0:
-        return 0.0
+        return 0.0 if tp + fn == 0 else tp / (tp + fn)
 
-    return tp / (tp + fn)
+    if average == "macro":
+        classes = np.unique(y_true)
+        scores = [
+            recall_score(y_true, y_pred, pos_label=c, average="binary")
+            for c in classes
+        ]
+        return np.mean(scores)
+
+    raise ValueError("average must be 'binary' or 'macro'")
 
 
-def f1_score(y_true, y_pred, pos_label=1):
-    precision = precision_score(y_true, y_pred, pos_label=pos_label)
-    recall = recall_score(y_true, y_pred, pos_label=pos_label)
+def f1_score(y_true, y_pred, pos_label=1, average='binary'):
+    if average == "binary":
+        precision = precision_score(y_true, y_pred, pos_label=pos_label, average="binary")
+        recall = recall_score(y_true, y_pred, pos_label=pos_label, average="binary")
 
-    if precision + recall == 0:
-        return 0.0
+        return 0.0 if precision + recall == 0 else (
+            2 * precision * recall / (precision + recall)
+        )
 
-    return 2 * precision * recall / (precision + recall)
+    if average == "macro":
+        y_true = np.asarray(y_true).ravel()
+        classes = np.unique(y_true)
+
+        scores = [
+            f1_score(y_true, y_pred, pos_label=c, average="binary")
+            for c in classes
+        ]
+
+        return np.mean(scores)
+
+    raise ValueError("average must be 'binary' or 'macro'")
 
 def roc_auc_score(y_true, y_score):
     y_true = np.asarray(y_true).ravel()

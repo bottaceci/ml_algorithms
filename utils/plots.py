@@ -8,8 +8,8 @@ def plot_confusion_matrix(cm, class_labels, title):
     plt.imshow(cm)
     plt.colorbar()
 
-    plt.xticks(list(range(len(class_labels))), ['Predicted '+ str(label) for label in class_labels]) 
-    plt.yticks(list(range(len(class_labels))), ['True '+ str(label) for label in class_labels])
+    plt.xticks(list(range(len(class_labels))), ['P '+ str(label) for label in class_labels]) 
+    plt.yticks(list(range(len(class_labels))), ['T '+ str(label) for label in class_labels])
 
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
@@ -50,7 +50,7 @@ def plot_difference_loss(scratch_loss, torch_loss):
     plt.tight_layout()
     plt.show()
 
-def plot_decision_boundary(model, X, y, title):
+def plot_decision_boundary(model, X, y, title, plot_points=True):
     x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
     y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 
@@ -68,13 +68,14 @@ def plot_decision_boundary(model, X, y, title):
 
     plt.contourf(xx, yy, Z, alpha=0.3)
 
-    plt.scatter(
-        X[:, 0],
-        X[:, 1],
-        c=y,
-        edgecolor="k",
-        alpha=0.7
-    )
+    if plot_points:
+        plt.scatter(
+            X[:, 0],
+            X[:, 1],
+            c=y,
+            edgecolor="k",
+            alpha=0.7
+        )
 
     plt.xlabel("Feature 1")
     plt.ylabel("Feature 2")
